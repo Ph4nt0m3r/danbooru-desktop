@@ -5,6 +5,7 @@ import java.io.IOException;
 //TODO: обновление фрейма при изменении его размеров, теги, оценки, нахождение похожих
 public class Main {
     final static File directory = new File("C:\\Users\\Lolof\\Desktop\\this");
+    static BufferedImage[] image;
     static int imageColumns = 4;
     static int scrollWidth=20;
 

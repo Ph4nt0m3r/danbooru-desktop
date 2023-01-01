@@ -21,7 +21,6 @@ public class Picture {
         return image;
     }
 
-    //TODO: найти алгоритм для преобразования в хэш
     public static void findSimilar(){
         Map<BufferedImage, int[][]> RGBMassive= new HashMap<>();
         //making massive of pixels for every picture

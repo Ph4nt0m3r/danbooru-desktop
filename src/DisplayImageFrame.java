@@ -6,8 +6,7 @@ import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+
 
 public class DisplayImageFrame extends JFrame{
     String path;
@@ -66,12 +65,6 @@ public class DisplayImageFrame extends JFrame{
         this.pack();
         //this.repaint();
     }
-
-    /*@Override
-    public void paint(Graphics g){
-        super.paint(g);
-        g.drawImage(processedImage,0,0,null);
-    }*/
 
 
 }

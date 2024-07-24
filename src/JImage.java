@@ -1,15 +1,12 @@
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+
 
 public class JImage extends Component {
     private BufferedImage image;
     private String path;
-
-
 
     public JImage(String path, BufferedImage image, boolean mouseActions){
         this.path = path;

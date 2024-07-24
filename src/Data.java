@@ -1,49 +1,67 @@
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
+
 
 //it loads pictures and makes stuff with them
 public class Data {
-    private static HashMap<String, BufferedImage> PicturesData = new HashMap<>(); //stores path and picture
-    private static HashMap<String, String> PicturesHash = new HashMap<>();
+    private static String[] PicturesPath; //stores path of original pictures
+    private static String[] PicturesHash; //stores path of images hash
 
-    private static String DataPath;
-
-    public static void loadImages(String path) {
-        DataPath = path;
-        File[] files = new File(path).listFiles();
-
+    public static void loadImages(String path){
         try {
+            File[] files = new File(path).listFiles();
+
+            if (files.length == 0){
+                throw new IOException("The chosen directory has no files");
+            }
+
+            int n = 0;
+
             for (File file : files) {
-                if (file.isFile()) {
-                    PicturesData.put(file.getAbsolutePath(), ImageIO.read(file));
+                if (isImage(file)) {
+                    n++;
+                }
+            }
+
+            if (n == 0){
+                throw new IOException("The chosen directory has no images");
+            }
+            PicturesPath = new String[n];
+
+            n=0;
+            for (File file: files) {
+                if (isImage(file)) {
+                    PicturesPath[n] = file.getAbsolutePath();
+                    n++;
                 }
             }
 
         } catch (IOException e) {
-            System.out.print(e.getStackTrace());
+            System.out.print(e);
         }
     }
 
     public static void loadImages(){
-        loadImages(DataPath);
+        loadImages(Main.path);
     }
 
-    public static BufferedImage[] getPictures(){
-        BufferedImage[] images = new BufferedImage[PicturesData.size()];
+    public static String[] getPicturesPath(){
+        return PicturesPath;
+    }
 
-        int i=0;
-        for (BufferedImage image: PicturesData.values()) {
-            images[i]=image;
-            i++;
+    private static boolean isImage(File file){
+        String name = file.getName();
+        int lastIndexOf = name.lastIndexOf(".");
+        if (lastIndexOf == -1) {
+            return false; // empty extension
         }
+        String ext = name.substring(lastIndexOf).toLowerCase();
 
-        return images;
+        return switch (ext) {
+            case ".png", ".jpeg", ".jpg" -> true;
+            default -> false;
+        };
     }
 
-    public static HashMap<String, BufferedImage> getPicturesData(){
-        return PicturesData;
-    }
+
 }

@@ -1,17 +1,19 @@
 import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.util.HashMap;
-import java.util.Map;
+
+//TODO: поставить ограничение на количество столбцов. Eсли сейчас вписать число большее,
+// чем есть картинок, то они дублируются
 
 public class Main {
+    public static String path = "C:\\Users\\Lolof\\Desktop\\this";
+    public static String cachePath = "C:\\Users\\Lolof\\Desktop\\this\\cache.txt";
 
     public static void main(String[] args) {
-        String path = "C:\\Users\\Lolof\\Desktop\\this";
-        Data.loadImages(path);
+        Data.loadImages();
 
-        MainFrame frame = new MainFrame();
-        frame.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            MainFrame frame = new MainFrame();
+            frame.setVisible(true);
+        });
     }
 
 }

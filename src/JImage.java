@@ -42,7 +42,12 @@ public class JImage extends Component {
 
             @Override
             public void mouseEntered(MouseEvent e) {
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
 
+            @Override
+            public void mouseExited(MouseEvent e){
+                setCursor(Cursor.getDefaultCursor());
             }
         });
     }

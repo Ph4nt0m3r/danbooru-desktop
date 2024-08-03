@@ -15,12 +15,20 @@ public class ErrorDialog{
                     JOptionPane.YES_NO_OPTION);
 
         }
+        else if (dt.equals(DialogType.INVALID_PATH)){
+            input = JOptionPane.showConfirmDialog(jframe,
+                    error + "\nPlease enter the valid path to images' directory",
+                    "Invalid images' path",
+                    JOptionPane.OK_CANCEL_OPTION);
+        }
+
         return input;
     }
 
 
     public enum DialogType {
         CORRUPTED_CACHE,
+        INVALID_PATH
 
     }
 }

@@ -4,16 +4,17 @@ import javax.swing.*;
 // чем есть картинок, то они дублируются
 
 public class Main {
-    public static String path = "C:\\Users\\Lolof\\Desktop\\this";
-    public static String cachePath = "C:\\Users\\Lolof\\Desktop\\this\\cache.txt";
+    private static final String path = "C:\\Users\\Lolof\\Desktop\\this";
+    private static final String cachePath = "C:\\Users\\Lolof\\Desktop\\this\\cache.txt";
 
     public static void main(String[] args) {
-        Data.loadImages();
+        Data.loadImages(path);
 
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame();
             frame.setVisible(true);
         });
-    }
 
+
+    }
 }

@@ -13,8 +13,6 @@ public class Hashing {
     final static int width = 16;
     static String dir = "C:\\Users\\Lolof\\Desktop\\this\\hash\\";
 
-
-
     public static void makeHash(Map<String, BufferedImage> pictureData){
         for (Map.Entry<String, BufferedImage> entry: pictureData.entrySet()){
             String fileName = new File(entry.getKey()).getName();
@@ -25,14 +23,13 @@ public class Hashing {
         }
     }
 
-
     private static BufferedImage compress(BufferedImage image, String fileName) {
         BufferedImage out = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
 
         Graphics2D graphics2D = out.createGraphics();
 
         graphics2D.drawImage(image, 0, 0, width, height, null);
-        //graphics2D.dispose();
+        graphics2D.dispose();
 
         try {
             File file = new File(dir + "hash_" + fileName + ".png");

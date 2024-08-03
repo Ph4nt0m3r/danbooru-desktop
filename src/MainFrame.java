@@ -1,10 +1,10 @@
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicSplitPaneDivider;
+import javax.swing.plaf.basic.BasicSplitPaneUI;
+import javax.swing.plaf.basic.BasicTreeUI;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -47,7 +47,7 @@ public class MainFrame extends JFrame{
 
         //setImages();
         this.setVisible(true);
-        this.resizeImages();
+        this.fitImages();
     }
 
     public MainFrame(){
@@ -64,14 +64,14 @@ public class MainFrame extends JFrame{
             }
         });
 
-        if (cacheFound()){
+        if (Data.getPath() != null && cacheFound()){
             loadCache();
         }
 
         else {
             setPanels();
             this.setVisible(true);
-            resizeImages();
+            fitImages();
         }
     }
 
@@ -80,79 +80,199 @@ public class MainFrame extends JFrame{
         imagePanel.setLayout(new GridLayout(0, imageCols));
         imagePanel.setBackground(bg);
 
-        //scrollPanel
         scrollPanel = new JScrollPane(imagePanel);
+        //scrollPanel.setSize(new Dimension(400, this.getHeight()));
         scrollPanel.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER); //remove hor. scroll
         scrollPanel.getVerticalScrollBar().setPreferredSize(new Dimension(scrollWidth,0));
         scrollPanel.getVerticalScrollBar().setUnitIncrement(30);
+        scrollPanel.setEnabled(true);
 
         settingsPanel = new JPanel();
+        //settingsPanel.setSize(new Dimension(settingsSize, this.getHeight()));
         settingsPanel.setPreferredSize(new Dimension(settingsSize, this.getHeight()));
         settingsPanel.setMinimumSize(new Dimension(settingsSize, this.getHeight()));
         settingsPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         settingsPanel.setBackground(bg);
+        settingsPanel.setEnabled(true);
 
         setButtons();
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPanel, settingsPanel);
-        splitPane.setDividerSize(15);
-        splitPane.setOneTouchExpandable(true);
-        splitPane.resetToPreferredSizes();
-        //splitPane.setEnabled(false);
-
-        this.add(splitPane);
-
-        splitPane.setResizeWeight(1);
-        //splitPane.setDividerLocation(0.8);
+        SplitPanel splitPanel = new SplitPanel(JSplitPane.HORIZONTAL_SPLIT, scrollPanel, settingsPanel);
+        this.add(splitPanel);
     }
 
+    // TODO: path selector
     private void setButtons(){
-        //buttons
         JButton resizeBtn = new JButton("resize");
         resizeBtn.setPreferredSize(new Dimension(btnSize, 30));
-        resizeBtn.addActionListener(new ActionListener() {
+        resizeBtn.addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                resizeImages();
+            public void mouseClicked(MouseEvent e) {
+                fitImages();
+            }
+            @Override
+            public void mouseEntered(MouseEvent e){
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+            @Override
+            public void mouseExited(MouseEvent e){
+                setCursor(Cursor.getDefaultCursor());
             }
         });
 
         JButton reloadBtn = new JButton("reload");
         reloadBtn.setPreferredSize(new Dimension(btnSize, 30));
-        reloadBtn.addActionListener(new ActionListener() {
+        reloadBtn.addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
+            public void mouseClicked(MouseEvent e) {
+                if (Data.getPath() == null){
+                    return;
+                }
+
                 Data.loadImages();
-                resizeImages();
+                fitImages();
+            }
+            @Override
+            public void mouseEntered(MouseEvent e){
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+            @Override
+            public void mouseExited(MouseEvent e){
+                setCursor(Cursor.getDefaultCursor());
             }
         });
 
         JButton colsBtn = new JButton("cols");
         colsBtn.setPreferredSize(new Dimension(btnSize, 30));
-        colsBtn.addActionListener(new ActionListener() {
+        colsBtn.addMouseListener(new MouseAdapter() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                JFrame frm = new JFrame("edit cols");
+            public void mouseClicked(MouseEvent e) {
+                JFrame frm = new JFrame();
                 try{
-                    int cols = Integer.parseInt(JOptionPane.showInputDialog(frm, "Enter amount of columns"));
+                    String str = JOptionPane.showInputDialog(frm, "Enter amount of columns", "Edit columns", JOptionPane.PLAIN_MESSAGE);
+                    //if cancel pressed
+                    if (str == null){
+                        return;
+                    }
 
-                    if (cols <= 0){
-                        throw new NumberFormatException("amount of columns should be greater then 0");
+                    //if ok pressed, but str is empty
+                    else if (str.equals("")) {
+                        int input = JOptionPane.showConfirmDialog(new JFrame(),
+                                "Enter something!",
+                                "Edit columns",
+                                JOptionPane.OK_CANCEL_OPTION);
+
+                        //if pressed ok then show again
+                        if (input == 0){
+                            mouseClicked(e);
+                        }
+                        return;
+                    }
+
+                    int cols = Integer.parseInt(str);
+                    //if columns are not in range [1:10]
+                    if (cols > JImages.length || cols > 10) {
+                        int input = JOptionPane.showConfirmDialog(new JFrame(),
+                                "Number of columns should be lesser than image amount and less than 10",
+                                "Edit columns",
+                                JOptionPane.OK_CANCEL_OPTION);
+                        //if pressed ok then show again
+                        if (input == 0){
+                            mouseClicked(e);
+                        } else return; //else exit
+                    }
+
+                    //if columns are negative
+                    else if (cols <= 0){
+                        int input = JOptionPane.showConfirmDialog(new JFrame(),
+                                "Number of columns should be a positive number!",
+                                "Edit columns",
+                                JOptionPane.OK_CANCEL_OPTION);
+                        //if pressed ok then show again
+                        if (input == 0){
+                            mouseClicked(e);
+                        } else return; //else exit
                     }
 
                     imageCols = cols;
                     imagePanel.setLayout(new GridLayout(0, imageCols));
-                    resizeImages();
+                    fitImages();
                 }
                 catch (NumberFormatException ex){
-                    System.out.println(ex);
+                    int input = JOptionPane.showConfirmDialog(new JFrame(),
+                            "The number of columns must be an integer!",
+                            "Edit columns",
+                            JOptionPane.OK_CANCEL_OPTION);
+                    //if pressed ok then show again
+                    if (input == 0){
+                        mouseClicked(e);
+                    }
+
                 }
             }
+
+            @Override
+            public void mouseEntered(MouseEvent e){
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+            @Override
+            public void mouseExited(MouseEvent e){
+                setCursor(Cursor.getDefaultCursor());
+            }
+        });
+
+        JButton changePathBtn = new JButton("path");
+        changePathBtn.setPreferredSize(new Dimension(btnSize, 30));
+        changePathBtn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                JFrame frm = new JFrame("enter path");
+                try{
+                    String path = JOptionPane.showInputDialog(frm, "Enter path with images");
+
+                    //if cancel pressed
+                    if (path == null){
+                        return;
+                    }
+
+                    //if ok is pressed but str is empty
+                    else if (path.equals("")){
+                        int input = JOptionPane.showConfirmDialog(new JFrame(),
+                                "Enter something!",
+                                "Change path",
+                                JOptionPane.OK_CANCEL_OPTION);
+                        if (input == 0){
+                            mouseClicked(e);
+                        }
+                        return;
+                    }
+
+                    Data.setPath(path);
+                }
+                catch (IOException ex){
+                    int input = ErrorDialog.ConfirmDialog(String.valueOf(ex), ErrorDialog.DialogType.INVALID_PATH);
+                    if (input == 0){
+                        mouseClicked(e);
+                    }
+                }
+
+            }
+
+           @Override
+           public void mouseEntered(MouseEvent e){
+               setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+           }
+           @Override
+           public void mouseExited(MouseEvent e){
+               setCursor(Cursor.getDefaultCursor());
+           }
+
         });
 
         settingsPanel.add(resizeBtn);
         settingsPanel.add(colsBtn);
         settingsPanel.add(reloadBtn);
+        settingsPanel.add(changePathBtn);
     }
 
     ///мб этот метод вообще не нужен??
@@ -169,64 +289,78 @@ public class MainFrame extends JFrame{
         }
     }
 
-    private void resizeImages() {
-        if (Data.getPicturesPath() == null){
+    /**Deletes contents of imagePanel and resizes images loaded from Data to fit MainFrame's imagePanel*/
+    private void fitImages() {
+        if (Data.getPicturesPath() == null) {
             return;
         }
-
-        int preferredSize = ((scrollPanel.getWidth() - scrollWidth) / imageCols) - spacing;
-        AffineTransform at;
 
         imagePanel.removeAll();
         JImages = new JImage[Data.getPicturesPath().length];
 
+        resizeImages();
+    }
+
+    /**Loads and resizes images from appendImagesPath to fit MainFrame's imagePanel*/
+    private void fitImages(String[] appendImagesPath){
+
+    }
+
+    private void resizeImages(){
+        int preferredSize = ((scrollPanel.getWidth() - scrollWidth) / imageCols) - spacing;
         //for every key-image entry
-        for (int i=0; i < Data.getPicturesPath().length; i++) {
+        for (int i = 0; i < Data.getPicturesPath().length; i++) {
             try {
-                BufferedImage image = ImageIO.read(new File(Data.getPicturesPath()[i]));
-
-                //scaling coefficient for every image to fit preferredSize box
-                int maxSize = Math.max(image.getWidth(), image.getHeight());
-                double scaling = (double) preferredSize / maxSize;
-                at = new AffineTransform();
-                at.scale(scaling, scaling);
-
-                //scaling
-                AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
-
-                //after scaling image template
-                BufferedImage tmp = new BufferedImage((int) (image.getWidth() * scaling),
-                        (int) (image.getHeight() * scaling),
-                        BufferedImage.TYPE_INT_ARGB);
-
-                tmp = scaleOp.filter(image, tmp);
-
-                //finalized image with spacing
-                BufferedImage processed = new BufferedImage((int) (maxSize * scaling + spacing),
-                        (int) (maxSize * scaling + spacing),
-                        BufferedImage.TYPE_INT_ARGB);
-
-                //indent to center image at finalize box
-                int w = (processed.getWidth() - tmp.getWidth()) / 2;
-                int h = (processed.getHeight() - tmp.getHeight()) / 2;
-
-                Graphics g = processed.createGraphics();
-                g.drawImage(tmp, w, h, null);
-                g.dispose();
-
-                //display scaled images
-                JImage jimage = new JImage(Data.getPicturesPath()[i], processed, true);
-                JImages[i] = jimage;
-                imagePanel.add(jimage);
-
-
-                this.setVisible(true); //refresh image panel
+                JImage resizedImage = resizeImage(Data.getPicturesPath()[i], preferredSize);
+                JImages[i] = resizedImage;
+                imagePanel.add(resizedImage);
             }
-            catch (IOException e){
+
+            catch (IOException e) {
                 System.out.println(e);
             }
+
+            this.setVisible(true); //refresh image panel
         }
     }
+
+    private JImage resizeImage(String imagePath, int preferredSize) throws IOException{
+        JImage jImage = null;
+
+            BufferedImage image = ImageIO.read(new File(imagePath));
+
+            //scaling coefficient for every image to fit preferredSize box
+            int maxSize = Math.max(image.getWidth(), image.getHeight());
+            double scaling = (double) preferredSize / maxSize;
+            AffineTransform at = new AffineTransform();
+            at.scale(scaling, scaling);
+
+            //scaling
+            AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+
+            //after scaling image template
+            BufferedImage tmp = new BufferedImage((int) (image.getWidth() * scaling),
+                    (int) (image.getHeight() * scaling),
+                    BufferedImage.TYPE_INT_ARGB);
+
+            tmp = scaleOp.filter(image, tmp);
+
+            //finalized image with spacing
+            BufferedImage processed = new BufferedImage((int) (maxSize * scaling + spacing),
+                    (int) (maxSize * scaling + spacing),
+                    BufferedImage.TYPE_INT_ARGB);
+
+            //indent to center image at finalize box
+            int w = (processed.getWidth() - tmp.getWidth()) / 2;
+            int h = (processed.getHeight() - tmp.getHeight()) / 2;
+
+            Graphics g = processed.createGraphics();
+            g.drawImage(tmp, w, h, null);
+            g.dispose();
+
+            //return scaled image
+            return new JImage(imagePath, processed, true);
+        }
 
     protected void saveCache(){
         if (JImages == null) {
@@ -234,7 +368,7 @@ public class MainFrame extends JFrame{
         }
 
         try {
-            FileOutputStream fileOutput = new FileOutputStream(Main.cachePath);
+            FileOutputStream fileOutput = new FileOutputStream(Data.getCachePath());
             ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput);
 
             objectOutput.writeInt(this.getWidth());
@@ -265,7 +399,7 @@ public class MainFrame extends JFrame{
     protected void loadCache(){
         System.out.println("loading cached data");
         try{
-            FileInputStream fileInput = new FileInputStream(Main.cachePath);
+            FileInputStream fileInput = new FileInputStream(Data.getCachePath());
             ObjectInputStream objectInput = new ObjectInputStream(fileInput);
             int w = objectInput.readInt();
             int h = objectInput.readInt();
@@ -327,7 +461,7 @@ public class MainFrame extends JFrame{
                 ErrorDialog.DialogType.CORRUPTED_CACHE);
 
         if (input == 0){
-            boolean i = new File(Main.cachePath).delete();
+            boolean i = new File(Data.getCachePath()).delete();
             System.out.println(i);
             //TODO: reload
         }
@@ -347,7 +481,7 @@ public class MainFrame extends JFrame{
     }
 
     private boolean cacheFound(){
-        for (File file: new File(Main.path).listFiles()) {
+        for (File file: new File(Data.getPath()).listFiles()) {
             if (file.getName().equals("cache.txt")){
                 return true;
             }
@@ -355,4 +489,129 @@ public class MainFrame extends JFrame{
         return false;
     }
 
+    private void findSimilar(){
+        //Hashing.makeHash();
+    }
+
+    private void updateFiles(){
+        String[] realImagesPath = Data.getPicturesPath();
+
+        //if new files is found
+        if (realImagesPath.length > JImages.length){
+            int newFiles = 0;
+            for (String realImagePath: realImagesPath){
+                boolean origFound = false;
+                for (JImage jimage: JImages) {
+                    if (jimage.getPath() == realImagePath){
+                        origFound = true;
+                        break;
+                    }
+                }
+                if (!origFound) {
+                    newFiles++;
+                }
+            }
+
+            String[] newImages = new String[newFiles];
+            int k = 0;
+            for (String realImagePath: realImagesPath){
+                boolean origFound = false;
+                for (JImage jimage: JImages) {
+                    if (jimage.getPath() == realImagePath){
+                        origFound = true;
+                        break;
+                    }
+                }
+                if (!origFound) {
+                    newImages[k] = realImagePath;
+                }
+            }
+
+
+
+        }
+
+        //if old files are deleted
+        else if (realImagesPath.length < JImages.length) {
+            fitImages();
+        }
+
+    }
+
+    private class SplitPanel extends JSplitPane {
+        protected Component leftComponent = scrollPanel;
+        protected Component rightComponent = settingsPanel;
+
+        private int dividerSize = 15;
+
+        public SplitPanel(int newOrientation, Component newLeftComponent, Component newRightComponent){
+            super(newOrientation, newLeftComponent, newRightComponent);
+
+            this.setOneTouchExpandable(true);
+            this.setEnabled(true);
+
+            SplitPanelUI ui = new SplitPanelUI();
+            ui.installUI(this);
+            ui.setDivider(dividerSize);
+            this.setUI(ui);
+
+            this.setResizeWeight(1); //or setDividerLocation
+            //setDividerLocation(200); //in pixels
+        }
+
+    }
+
+    private class SplitPanelUI extends BasicSplitPaneUI{
+
+        public SplitPanelUI(){
+            super();
+        }
+
+        protected void setDivider(int dividerSize) {
+            divider = new Divider(this);
+            divider.setDividerSize(dividerSize);
+        }
+
+        @Override
+        protected void startDragging(){
+        }
+
+        @Override
+        protected void dragDividerTo(int location) {
+        }
+
+        @Override
+        protected void finishDraggingTo(int location) {
+        }
+
+    }
+
+    private class Divider extends BasicSplitPaneDivider {
+
+        public Divider(BasicSplitPaneUI ui) {
+            super(ui);
+
+            setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+
+            //TODO: выяснить почему цвет не меняется
+            setBackground(Color.YELLOW);
+            setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        }
+
+        @Override
+        protected JButton createLeftOneTouchButton() {
+            JButton btn = super.createLeftOneTouchButton();
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            return btn;
+        }
+
+        @Override
+        protected JButton createRightOneTouchButton() {
+            JButton btn = super.createRightOneTouchButton();
+            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            return btn;
+        }
+
+    }
 }
+

@@ -7,42 +7,42 @@ public class Data {
     private static String[] PicturesPath; //stores path of original pictures
     private static String[] PicturesHash; //stores path of images hash
 
+    private static String path = null;
+    private static String cachePath = null;
+
     public static void loadImages(String path){
-        try {
-            File[] files = new File(path).listFiles();
+        try{
+        Data.setPath(path);
+        File[] files = new File(path).listFiles();
 
-            if (files.length == 0){
-                throw new IOException("The chosen directory has no files");
+        //get amount of images
+        int n = 0;
+        assert files != null;
+        for (File file : files) {
+            if (isImage(file)) {
+                n++;
             }
+        }
 
-            int n = 0;
+        PicturesPath = new String[n];
+        n=0;
 
-            for (File file : files) {
-                if (isImage(file)) {
-                    n++;
-                }
+        //add images to PicturesPath
+        for (File file: files) {
+            if (isImage(file)) {
+                PicturesPath[n] = file.getAbsolutePath();
+                n++;
             }
+        }
 
-            if (n == 0){
-                throw new IOException("The chosen directory has no images");
-            }
-            PicturesPath = new String[n];
-
-            n=0;
-            for (File file: files) {
-                if (isImage(file)) {
-                    PicturesPath[n] = file.getAbsolutePath();
-                    n++;
-                }
-            }
-
-        } catch (IOException e) {
-            System.out.print(e);
+        }
+        catch (IOException e) {
+            System.out.println(e);
         }
     }
 
     public static void loadImages(){
-        loadImages(Main.path);
+        loadImages(path);
     }
 
     public static String[] getPicturesPath(){
@@ -63,5 +63,40 @@ public class Data {
         };
     }
 
+    public static void setPath(String path) throws IOException {
+        File[] files = new File(path).listFiles();
+
+        if (files == null){
+            throw new IOException("Invalid directory path");
+        }
+
+        if (files.length == 0){
+            throw new IOException("The chosen directory has no files or directories");
+        }
+
+        boolean hasImages = false;
+        for (File file : files) {
+            if (isImage(file)) {
+                hasImages = true;
+                break;
+            }
+        }
+
+        if (!hasImages){
+            throw new IOException("The chosen directory has no images");
+        }
+
+        Data.path = path;
+        Data.cachePath = path + "\\cache.txt";
+
+    }
+
+    public static String getPath(){
+        return path;
+    }
+
+    public static String getCachePath(){
+        return cachePath;
+    }
 
 }
